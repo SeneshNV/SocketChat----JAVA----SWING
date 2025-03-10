@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package SocketChatApp.Client;
 
 import javax.swing.*;
@@ -10,10 +6,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- * @author User
- */
 public class ClientChatMain extends javax.swing.JFrame {
 
     private Socket socket;
@@ -22,9 +14,7 @@ public class ClientChatMain extends javax.swing.JFrame {
     private String username;
     private DefaultListModel<String> userListModel;
     private Map<String, StringBuilder> messageMap; // Map to store messages for each user and broadcast
-    /**
-     * Creates new form ClientChatMain
-     */
+
     public ClientChatMain() {
         messageMap = new HashMap<>();
         messageMap.put("Broadcast Message", new StringBuilder());
@@ -39,7 +29,6 @@ public class ClientChatMain extends javax.swing.JFrame {
     }
 
     public ClientChatMain(Socket socket, String username) {
-
         this();
         this.socket = socket;
         this.username = username;
@@ -48,12 +37,15 @@ public class ClientChatMain extends javax.swing.JFrame {
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             sendUsername();
             listenForMessages();
+
+            lbl_username.setText(username);
+
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
-    private void sendUsername(){
+    private void sendUsername() {
         try {
             bufferedWriter.write(username);
             bufferedWriter.newLine();
@@ -70,6 +62,7 @@ public class ClientChatMain extends javax.swing.JFrame {
                 try {
                     messageFromServer = bufferedReader.readLine();
                     if (messageFromServer != null) {
+                        System.out.println("Received message: " + messageFromServer); // Debugging
                         String[] parts = messageFromServer.split("\\|\\|");
                         if (parts.length >= 5 && parts[1].equals("USER_LIST")) {
                             updateUserList(parts[4]);
@@ -77,10 +70,23 @@ public class ClientChatMain extends javax.swing.JFrame {
                             String sender = parts[2];
                             String receiver = parts[3];
                             String message = parts[4];
-                            String key = receiver.equals("ALL") ? "Broadcast Message" : sender;
+
+                            // Determine the key for the messageMap
+                            String key;
+                            if (receiver.equals("ALL")) {
+                                key = "Broadcast Message"; // Broadcast message
+                            } else if (sender.equals(username)) {
+                                key = receiver; // Sent message to a specific user
+                            } else {
+                                key = sender; // Received message from a specific user
+                            }
+
+                            // Append the message to the appropriate key in the messageMap
                             messageMap.computeIfAbsent(key, k -> new StringBuilder()).append("[" + sender + "]: " + message + "\n---\n");
+
+                            // Update the chat area if the selected user matches the key
                             if (lbl_selected_user.getText().equals(key)) {
-                                txt_area_messages.setText(messageMap.get(key).toString());
+                                SwingUtilities.invokeLater(() -> txt_area_messages.setText(messageMap.get(key).toString()));
                             }
                         }
                     }
@@ -98,7 +104,7 @@ public class ClientChatMain extends javax.swing.JFrame {
             userListModel.addElement("Broadcast Message");
             String[] users = userList.split(",");
             for (String user : users) {
-                if (!user.isEmpty()) {
+                if (!user.isEmpty() && !user.equals(username)) {
                     userListModel.addElement(user);
                 }
             }
@@ -116,6 +122,13 @@ public class ClientChatMain extends javax.swing.JFrame {
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
                 txt_enter_message.setText("");
+
+                // Display the sent message in the chat area
+                String key = receiver.equals("Broadcast Message") ? "Broadcast Message" : receiver;
+                messageMap.computeIfAbsent(key, k -> new StringBuilder()).append("[" + username + " (You)]: " + message + "\n---\n");
+                if (lbl_selected_user.getText().equals(key)) {
+                    SwingUtilities.invokeLater(() -> txt_area_messages.setText(messageMap.get(key).toString()));
+                }
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
             }
@@ -149,7 +162,8 @@ public class ClientChatMain extends javax.swing.JFrame {
         txt_username = new javax.swing.JTextField();
         btn_enter_username = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
-        lbl_server_status = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        lbl_username = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         list_current_users = new javax.swing.JList<>();
@@ -161,6 +175,7 @@ public class ClientChatMain extends javax.swing.JFrame {
         btn_send_message = new javax.swing.JButton();
         lbl_selected_user = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        lbl_server_status = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -174,12 +189,14 @@ public class ClientChatMain extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(48, Short.MAX_VALUE))
+                .addContainerGap(59, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
+
+        jPanel2.setBackground(new java.awt.Color(204, 204, 255));
 
         jLabel2.setText("Enter Your Name");
 
@@ -205,15 +222,13 @@ public class ClientChatMain extends javax.swing.JFrame {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(txt_username, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btn_enter_username, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -223,27 +238,36 @@ public class ClientChatMain extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btn_enter_username, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
+                    .addComponent(btn_enter_username, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(txt_username))
                 .addContainerGap())
         );
 
-        lbl_server_status.setText("Server Status");
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        jLabel4.setText("Hi,");
+
+        lbl_username.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lbl_username.setText("Welcome");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lbl_server_status, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lbl_username, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(lbl_server_status)
-                .addGap(0, 8, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(lbl_username, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel4.setBackground(new java.awt.Color(204, 255, 204));
@@ -324,9 +348,13 @@ public class ClientChatMain extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        lbl_selected_user.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         lbl_selected_user.setText("Sender");
 
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel3.setText("Contact List");
+
+        lbl_server_status.setText("Server Status");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -353,16 +381,22 @@ public class ClientChatMain extends javax.swing.JFrame {
                                 .addComponent(lbl_selected_user, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lbl_server_status, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbl_selected_user, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -374,19 +408,22 @@ public class ClientChatMain extends javax.swing.JFrame {
                         .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(67, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
+                .addComponent(lbl_server_status)
+                .addContainerGap())
         );
 
-        btn_send_message.addActionListener(e -> sendMessage());
-
-        // Add list selection listener for list_current_users
         list_current_users.addListSelectionListener(e -> {
-            String selectedUser = list_current_users.getSelectedValue();
-            if (selectedUser != null) {
-                lbl_selected_user.setText(selectedUser);
-                txt_area_messages.setText(messageMap.getOrDefault(selectedUser, new StringBuilder()).toString());
+            if (!e.getValueIsAdjusting()) {
+                String selectedUser = list_current_users.getSelectedValue();
+                if (selectedUser != null) {
+                    lbl_selected_user.setText(selectedUser);
+                    txt_area_messages.setText(messageMap.getOrDefault(selectedUser, new StringBuilder()).toString());
+                }
             }
         });
+
+        btn_send_message.addActionListener(e -> sendMessage());
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -402,6 +439,9 @@ public class ClientChatMain extends javax.swing.JFrame {
             if (!username.isEmpty()) {
                 Socket socket = new Socket("127.0.0.1", 9822);
                 ClientChatMain clientChatMain = new ClientChatMain(socket, username);
+
+
+
                 clientChatMain.setVisible(true);
 
             } else {
@@ -458,6 +498,7 @@ public class ClientChatMain extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -468,6 +509,7 @@ public class ClientChatMain extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lbl_selected_user;
     private javax.swing.JLabel lbl_server_status;
+    private javax.swing.JLabel lbl_username;
     private javax.swing.JList<String> list_current_users;
     private javax.swing.JTextArea txt_area_messages;
     private javax.swing.JTextField txt_enter_message;

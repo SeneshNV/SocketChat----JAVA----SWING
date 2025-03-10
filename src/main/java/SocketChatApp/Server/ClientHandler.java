@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable {
                     String[] parts = messageFromClient.split("\\|\\|");
                     if (parts.length >= 5 && parts[1].equals("MESSAGE")) {
                         String receiver = parts[3];
-                        if (receiver.equals("Broadcast Message")) {
+                        if (receiver.equals("ALL")) {
                             broadcastMessage(messageFromClient);
                         } else {
                             sendMessageToUser(messageFromClient, receiver);
