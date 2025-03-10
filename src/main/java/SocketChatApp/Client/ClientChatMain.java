@@ -379,6 +379,7 @@ public class ClientChatMain extends javax.swing.JFrame {
 
         btn_send_message.addActionListener(e -> sendMessage());
 
+        // Add list selection listener for list_current_users
         list_current_users.addListSelectionListener(e -> {
             String selectedUser = list_current_users.getSelectedValue();
             if (selectedUser != null) {
