@@ -13,7 +13,7 @@ public class ClientChatMain extends javax.swing.JFrame {
     private BufferedWriter bufferedWriter;
     private String username;
     private DefaultListModel<String> userListModel;
-    private Map<String, StringBuilder> messageMap; // Map to store messages for each user and broadcast
+    private Map<String, StringBuilder> messageMap; // Map to store messages
 
     public ClientChatMain() {
         messageMap = new HashMap<>();
@@ -62,7 +62,7 @@ public class ClientChatMain extends javax.swing.JFrame {
                 try {
                     messageFromServer = bufferedReader.readLine();
                     if (messageFromServer != null) {
-                        System.out.println("Received message: " + messageFromServer); // Debugging
+                        System.out.println("Received message: " + messageFromServer);
                         String[] parts = messageFromServer.split("\\|\\|");
                         if (parts.length >= 5 && parts[1].equals("USER_LIST")) {
                             updateUserList(parts[4]);
@@ -74,17 +74,17 @@ public class ClientChatMain extends javax.swing.JFrame {
                             // Determine the key for the messageMap
                             String key;
                             if (receiver.equals("ALL")) {
-                                key = "Broadcast Message"; // Broadcast message
+                                key = "Broadcast Message";
                             } else if (sender.equals(username)) {
-                                key = receiver; // Sent message to a specific user
+                                key = receiver;
                             } else {
-                                key = sender; // Received message from a specific user
+                                key = sender;
                             }
 
-                            // Append the message to the appropriate key in the messageMap
+
                             messageMap.computeIfAbsent(key, k -> new StringBuilder()).append("[" + sender + "]: " + message + "\n---\n");
 
-                            // Update the chat area if the selected user matches the key
+                            // Update the chat area
                             if (lbl_selected_user.getText().equals(key)) {
                                 SwingUtilities.invokeLater(() -> txt_area_messages.setText(messageMap.get(key).toString()));
                             }
