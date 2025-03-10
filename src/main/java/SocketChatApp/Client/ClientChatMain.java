@@ -7,6 +7,8 @@ package SocketChatApp.Client;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -19,11 +21,14 @@ public class ClientChatMain extends javax.swing.JFrame {
     private BufferedWriter bufferedWriter;
     private String username;
     private DefaultListModel<String> userListModel;
-
+    private Map<String, StringBuilder> messageMap; // Map to store messages for each user and broadcast
     /**
      * Creates new form ClientChatMain
      */
     public ClientChatMain() {
+        messageMap = new HashMap<>();
+        messageMap.put("Broadcast Message", new StringBuilder());
+
         initComponents();
 
         userListModel = new DefaultListModel<>();
@@ -68,8 +73,15 @@ public class ClientChatMain extends javax.swing.JFrame {
                         String[] parts = messageFromServer.split("\\|\\|");
                         if (parts.length >= 5 && parts[1].equals("USER_LIST")) {
                             updateUserList(parts[4]);
-                        } else {
-                            txt_area_messages.append(messageFromServer + "\n");
+                        } else if (parts.length >= 5 && parts[1].equals("MESSAGE")) {
+                            String sender = parts[2];
+                            String receiver = parts[3];
+                            String message = parts[4];
+                            String key = receiver.equals("ALL") ? "Broadcast Message" : sender;
+                            messageMap.computeIfAbsent(key, k -> new StringBuilder()).append("[" + sender + "]: " + message + "\n---\n");
+                            if (lbl_selected_user.getText().equals(key)) {
+                                txt_area_messages.setText(messageMap.get(key).toString());
+                            }
                         }
                     }
                 } catch (IOException e) {
@@ -98,7 +110,7 @@ public class ClientChatMain extends javax.swing.JFrame {
         if (!message.isEmpty()) {
             String receiver = list_current_users.getSelectedValue();
             if (receiver == null) receiver = "Broadcast Message";
-            String formattedMessage = "||MESSAGE||" + username + "||" + receiver + "||" + message + "||";
+            String formattedMessage = "||MESSAGE||" + username + "||" + (receiver.equals("Broadcast Message") ? "ALL" : receiver) + "||" + message + "||";
             try {
                 bufferedWriter.write(formattedMessage);
                 bufferedWriter.newLine();
@@ -367,11 +379,11 @@ public class ClientChatMain extends javax.swing.JFrame {
 
         btn_send_message.addActionListener(e -> sendMessage());
 
-        // Add list selection listener for list_current_users
         list_current_users.addListSelectionListener(e -> {
             String selectedUser = list_current_users.getSelectedValue();
             if (selectedUser != null) {
                 lbl_selected_user.setText(selectedUser);
+                txt_area_messages.setText(messageMap.getOrDefault(selectedUser, new StringBuilder()).toString());
             }
         });
 
