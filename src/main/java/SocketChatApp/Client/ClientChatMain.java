@@ -63,15 +63,18 @@ public class ClientChatMain extends javax.swing.JFrame {
                     messageFromServer = bufferedReader.readLine();
                     if (messageFromServer != null) {
                         System.out.println("Received message: " + messageFromServer);
+
                         String[] parts = messageFromServer.split("\\|\\|");
+
                         if (parts.length >= 5 && parts[1].equals("USER_LIST")) {
                             updateUserList(parts[4]);
+
                         } else if (parts.length >= 5 && parts[1].equals("MESSAGE")) {
                             String sender = parts[2];
                             String receiver = parts[3];
                             String message = parts[4];
 
-                            // Determine the key for the messageMap
+                            // det.. key for the messageMap
                             String key;
                             if (receiver.equals("ALL")) {
                                 key = "Broadcast Message";
