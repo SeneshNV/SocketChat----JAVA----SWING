@@ -60,7 +60,8 @@ public class ClientChatMain extends javax.swing.JFrame {
                         String[] parts = messageFromServer.split("\\|\\|");
 
                         if (parts.length >= 5 && parts[1].equals("USER_LIST")) {
-                            updateUserList(parts[4]);
+                            // ||USER_LIST||SERVER||ALL||" + getUsernames() + "||");
+                            updateUserList(parts[4]); //send user names to update user list
 
                         } else if (parts.length >= 5 && parts[1].equals("MESSAGE")) {
                             String sender = parts[2];
@@ -98,6 +99,7 @@ public class ClientChatMain extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> {
             userListModel.clear();
             userListModel.addElement("Broadcast Message");
+            // split user name array
             String[] users = userList.split(",");
             for (String user : users) {
                 if (!user.isEmpty() && !user.equals(username)) {
@@ -292,6 +294,7 @@ public class ClientChatMain extends javax.swing.JFrame {
         });
 
         btn_send_message.addActionListener(e -> sendMessage());
+        btn_send_message.setEnabled(false);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -449,7 +452,11 @@ public class ClientChatMain extends javax.swing.JFrame {
 
         if (!username.isEmpty()) {
 
+            txt_username.disable();
+            btn_enter_username.setEnabled(false);
             sendUsername(username);
+            btn_send_message.setEnabled(true);
+
 
         } else {
             JOptionPane.showMessageDialog(this, "Username cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
