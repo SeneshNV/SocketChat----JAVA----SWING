@@ -9,11 +9,11 @@ import java.util.Map;
 public class ClientChatMain extends javax.swing.JFrame {
 
     private Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
+    private BufferedReader bufferedReader; // to read the server messages
+    private BufferedWriter bufferedWriter; // write the message for send to server
     private String username;
     private DefaultListModel<String> userListModel;
-    private Map<String, StringBuilder> messageMap; // Map to store messages
+    private Map<String, StringBuilder> messageMap; // Map to store messages user mg and broadcast mg
 
     public ClientChatMain(Socket socket) throws IOException {
         this.socket = socket;
@@ -21,7 +21,10 @@ public class ClientChatMain extends javax.swing.JFrame {
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+        //implementation of the Map Interface
+        // Map<String, StringBuilder> messageMap = new HashMap<>
         messageMap = new HashMap<>();
+        // add elements
         messageMap.put("Broadcast Message", new StringBuilder());
 
         initComponents();
@@ -48,6 +51,7 @@ public class ClientChatMain extends javax.swing.JFrame {
         }
     }
 
+    // continously listening for messsages from the server
     private void listenForMessages() {
         new Thread(() -> {
             String messageFromServer;
