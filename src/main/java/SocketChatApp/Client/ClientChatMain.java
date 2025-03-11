@@ -15,7 +15,12 @@ public class ClientChatMain extends javax.swing.JFrame {
     private DefaultListModel<String> userListModel;
     private Map<String, StringBuilder> messageMap; // Map to store messages
 
-    public ClientChatMain() {
+    public ClientChatMain(Socket socket) throws IOException {
+        this.socket = socket;
+
+        this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
         messageMap = new HashMap<>();
         messageMap.put("Broadcast Message", new StringBuilder());
 
@@ -28,28 +33,16 @@ public class ClientChatMain extends javax.swing.JFrame {
         lbl_selected_user.setText("Broadcast Message");
     }
 
-    public ClientChatMain(Socket socket, String username) {
-        this();
-        this.socket = socket;
-        this.username = username;
-        try {
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            sendUsername();
-            listenForMessages();
-
-            lbl_username.setText(username);
-
-        } catch (IOException e) {
-            closeEverything(socket, bufferedReader, bufferedWriter);
-        }
-    }
-
-    private void sendUsername() {
+    private void sendUsername(String username) {
         try {
             bufferedWriter.write(username);
             bufferedWriter.newLine();
             bufferedWriter.flush();
+
+            lbl_username.setText(username);
+            this.username = username;
+            listenForMessages();
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -128,7 +121,11 @@ public class ClientChatMain extends javax.swing.JFrame {
 
                 // Display the sent message in the chat area
                 String key = receiver.equals("Broadcast Message") ? "Broadcast Message" : receiver;
+
+                if(!receiver.equals("Broadcast Message")){
                 messageMap.computeIfAbsent(key, k -> new StringBuilder()).append("[" + username + " (You)]: " + message + "\n---\n");
+                }
+
                 if (lbl_selected_user.getText().equals(key)) {
                     SwingUtilities.invokeLater(() -> txt_area_messages.setText(messageMap.get(key).toString()));
                 }
@@ -448,24 +445,15 @@ public class ClientChatMain extends javax.swing.JFrame {
     }//GEN-LAST:event_txt_usernameActionPerformed
 
     private void btn_enter_usernameActionPerformed(java.awt.event.ActionEvent evt) throws IOException {//GEN-FIRST:event_btn_enter_usernameActionPerformed
-        try {
-            String username = txt_username.getText().trim();
+        String username = txt_username.getText().trim();
 
-            if (!username.isEmpty()) {
-                Socket socket = new Socket("127.0.0.1", 9822);
-                ClientChatMain clientChatMain = new ClientChatMain(socket, username);
+        if (!username.isEmpty()) {
 
+            sendUsername(username);
 
-
-                clientChatMain.setVisible(true);
-
-            } else {
-                JOptionPane.showMessageDialog(this, "Username cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not connect to the server!", "Connection Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Username cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
         }
-
 
 
     }//GEN-LAST:event_btn_enter_usernameActionPerformed
@@ -504,7 +492,13 @@ public class ClientChatMain extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new ClientChatMain().setVisible(true);
+                Socket socket = null;
+                try {
+                    socket = new Socket("127.0.0.1", 9822);
+                    new ClientChatMain(socket).setVisible(true);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
